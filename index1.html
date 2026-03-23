@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* Custom styles to ensure full height and sticky sidebar */
+        html, body, #app-container {
+            height: 100%;
+        }
+        .page-content {
+            flex-grow: 1; /* Allows content to fill available space */
+            /* Add padding to account for main's padding, if necessary, or adjust main's padding */
+            padding-bottom: 2rem; /* Ensure some space at the bottom of each page content */
+        }
+        .sidebar {
+            width: 250px; /* Fixed width for the sidebar */
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+        }
+        .hidden {
+            display: none !important;
+        }
+        .nav-link.active {
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            color: white;
+            font-weight: 600; /* Semi-bold */
+        }
+        /* Style for item cards */
+        .item-card img {
+            max-height: 192px; /* h-48 equivalent for image */
+            object-fit: cover;
+        }
+        /* Specific modal styling for better visibility */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    <div id="app-container" class="flex h-screen">
+
+        <aside class="sidebar bg-gray-800 text-white p-6 flex flex-col shadow-lg">
+            <h1 class="text-2xl font-bold mb-8 text-blue-400">Lost & Found</h1>
+            <nav class="flex-grow">
+                <ul class="space-y-3">
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200" data-page="report" data-item-type="lost">
+                            <i class="fas fa-exclamation-circle mr-3"></i> Report Lost Item
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200" data-page="report" data-item-type="found">
+                            <i class="fas fa-plus-circle mr-3"></i> Report Found Item
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200" data-page="browse">
+                            <i class="fas fa-search mr-3"></i> Browse Found Items
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200" data-page="my-reports">
+                            <i class="fas fa-clipboard-list mr-3"></i> My Reports
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center py-2 px-4 rounded-md hover:bg-gray-700 transition duration-200 text-yellow-300" data-page="admin-items">
+                            <i class="fas fa-tools mr-3"></i> Admin Tools
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-6 border-t border-gray-700 text-sm text-gray-400">
+                <p>&copy; 2023 Lost & Found</p>
+                <p>Version 1.0</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-8">
+
+            <section id="page-dashboard" class="page-content space-y-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Dashboard</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Open Lost Items</h3>
+                        <p id="dashboard-open-lost" class="text-4xl font-bold text-red-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Open Found Items</h3>
+                        <p id="dashboard-open-found" class="text-4xl font-bold text-green-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Total Resolved Items</h3>
+                        <p id="dashboard-total-resolved" class="text-4xl font-bold text-blue-600 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button class="dashboard-btn bg-red-500 text-white py-3 px-6 rounded-md hover:bg-red-600 transition duration-200 text-lg font-semibold" data-page="report" data-item-type="lost">Report Lost</button>
+                        <button class="dashboard-btn bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600 transition duration-200 text-lg font-semibold" data-page="report" data-item-type="found">Report Found</button>
+                        <button class="dashboard-btn bg-blue-500 text-white py-3 px-6 rounded-md hover:bg-blue-600 transition duration-200 text-lg font-semibold" data-page="browse">Browse Found</button>
+                        <button class="dashboard-btn bg-indigo-500 text-white py-3 px-6 rounded-md hover:bg-indigo-600 transition duration-200 text-lg font-semibold" data-page="my-reports">My Reports</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Your Recent Activity</h3>
+                    <ul class="space-y-3" id="dashboard-recent-reports-list">
+                        <li class="text-gray-500">No recent reports to display.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="page-report" class="page-content hidden">
+                <h2 id="report-page-title" class="text-3xl font-bold text-gray-900 mb-6">Report Item</h2>
+                <div class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+                    <form id="report-item-form">
+                        <input type="hidden" id="report_item_type" name="item_type">
+                        <div class="mb-4">
+                            <label for="category" class="block text-gray-700 text-sm font-bold mb-2">Item Category:</label>
+                            <input type="text" id="category" name="category" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Detailed Description:</label>
+                            <textarea id="description" name="description" rows="4" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location (where found/lost):</label>
+                            <input type="text" id="location" name="location" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label for="report-date" class="block text-gray-700 text-sm font-bold mb-2">Date & Time:</label>
+                            <input type="datetime-local" id="report-date" name="report_date" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-6">
+                            <label for="contact_info" class="block text-gray-700 text-sm font-bold mb-2">Your Contact Info (Email/Phone):</label>
+                            <input type="text" id="contact_info" name="contact_info" required placeholder="e.g., your@email.com or 555-123-4567" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-6">
+                            <label for="item_photo" class="block text-gray-700 text-sm font-bold mb-2">Upload Photo (Optional):</label>
+                            <input type="file" id="item_photo" name="item_photo" accept="image/*"
+                                   class="block w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-md file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-indigo-50 file:text-indigo-700
+                                          hover:file:bg-indigo-100"/>
+                            <p class="text-xs text-gray-500 mt-1">Accepted: PNG, JPG, JPEG, GIF</p>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                                Submit Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section id="page-browse" class="page-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Browse Found Items</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="search-input" class="block text-gray-700 text-sm font-bold mb-2">Search:</label>
+                            <input type="text" id="search-input" placeholder="Keyword in description or category" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div>
+                            <label for="category-filter" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
+                            <select id="category-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="all">All Categories</option>
+                                <option value="phone">Phone</option>
+                                <option value="keys">Keys</option>
+                                <option value="wallet">Wallet</option>
+                                <option value="backpack">Backpack</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="documents">Documents</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="location-filter" class="block text-gray-700 text-sm font-bold mb-2">Location:</label>
+                            <select id="location-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="all">All Locations</option>
+                                <option value="library">Library</option>
+                                <option value="cafeteria">Cafeteria</option>
+                                <option value="dorm">Dorm</option>
+                                <option value="gym">Gym</option>
+                                <option value="classroom">Classroom</option>
+                                <option value="admin building">Admin Building</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-right">
+                        <button id="clear-filters" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">Clear Filters</button>
+                    </div>
+                </div>
+
+                <div id="item-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="col-span-full text-center text-gray-500 py-8">Loading found items...</p>
+                </div>
+            </section>
+
+            <section id="page-detail" class="page-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6" id="detail-name">Item Details</h2>
+                <div class="bg-white p-8 rounded-lg shadow-md max-w-3xl mx-auto">
+                    <img id="detail-image" src="https://placehold.co/600x400/CCCCCC/000000?text=Item" alt="Item Image" class="w-full h-80 object-cover rounded-md mb-6 shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-600">Category:</p>
+                            <p id="detail-category" class="text-lg text-gray-900"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-600">Location Found:</p>
+                            <p id="detail-location" class="text-lg text-gray-900"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-600">Date Found:</p>
+                            <p id="detail-date" class="text-lg text-gray-900"></p>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <p class="text-sm font-semibold text-gray-600">Description:</p>
+                        <p id="detail-description" class="text-base text-gray-800 leading-relaxed"></p>
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button id="claim-item-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                            Claim This Item
+                        </button>
+                        <button onclick="showPage('browse')" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                            Back to Browse
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-my-reports" class="page-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">My Reported Items</h2>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="mb-6">
+                        <label for="my-reports-contact-input" class="block text-gray-700 text-sm font-bold mb-2">Enter Your Contact Info (Email/Phone) to View Your Reports:</label>
+                        <div class="flex">
+                            <input type="text" id="my-reports-contact-input" placeholder="e.g., your@email.com or 555-123-4567" class="shadow appearance-none border rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <button id="view-my-reports-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r focus:outline-none focus:shadow-outline transition duration-200">
+                                View Reports
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-reports-table-body" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="6" class="text-center py-4 text-gray-500">Please enter your contact info to view reports.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-admin-items" class="page-content hidden">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Admin: All Items</h2>
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+                    <p class="font-bold">Admin Functionality</p>
+                    <p>This page allows viewing and managing all reported items. In a real application, this would be protected by robust authentication.</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-items-table-body" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="7" class="text-center py-4 text-gray-500">Loading all items...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="claim-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">Claim This Item</h3>
+            <p class="text-gray-700 mb-4">To claim, please provide your contact information and a unique detail about the item that only the owner would know (e.g., brand, specific scratch, contents).</p>
+            <div class="mb-4">
+                <label for="claim-contact-input" class="block text-gray-700 text-sm font-bold mb-2">Your Contact Info (Email/Phone):</label>
+                <input type="text" id="claim-contact-input" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-4">
+                <label for="claim-detail-input" class="block text-gray-700 text-sm font-bold mb-2">Unique Detail:</label>
+                <input type="text" id="claim-detail-input" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button type="button" id="cancel-claim-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                    Cancel
+                </button>
+                <button type="submit" id="submit-claim-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                    Submit Claim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-item-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">Edit Your Report</h3>
+            <form id="edit-item-form" class="space-y-4">
+                <input type="hidden" id="edit-item-id">
+                <input type="hidden" id="edit-item-reporter-contact">
+                <div class="mb-4">
+                    <label for="edit-category" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
+                    <input type="text" id="edit-category" name="category" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label for="edit-description" class="block text-gray-700 text-sm font-bold mb-2">Description:</label>
+                    <textarea id="edit-description" name="description" rows="4" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-location" class="block text-gray-700 text-sm font-bold mb-2">Location:</label>
+                    <input type="text" id="edit-location" name="location" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label for="edit-item-photo" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photo (Optional):</label>
+                    <input type="file" id="edit-item-photo" name="item_photo" accept="image/*"
+                           class="block w-full text-sm text-gray-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-md file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-indigo-50 file:text-indigo-700
+                                  hover:file:bg-indigo-100"/>
+                    <p class="text-xs text-gray-500 mt-1">Accepted: PNG, JPG, JPEG, GIF</p>
+                </div>
+                <div class="flex items-center justify-between mt-6">
+                    <button type="button" id="cancel-edit-btn"
+                            class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

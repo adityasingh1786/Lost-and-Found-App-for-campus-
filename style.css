@@ -1,0 +1,48 @@
+/* Custom styles to ensure full height and sticky sidebar */
+html, body, #app-container {
+    height: 100%;
+}
+.page-content {
+    flex-grow: 1; /* Allows content to fill available space */
+    /* Add padding to account for main's padding, if necessary, or adjust main's padding */
+    padding-bottom: 2rem; /* Ensure some space at the bottom of each page content */
+}
+.sidebar {
+    width: 250px; /* Fixed width for the sidebar */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+.hidden {
+    display: none !important;
+}
+.nav-link.active {
+    background-color: #3b82f6; /* Tailwind blue-500 */
+    color: white;
+    font-weight: 600; /* Semi-bold */
+}
+/* Style for item cards */
+.item-card img {
+    max-height: 192px; /* h-48 equivalent for image */
+    object-fit: cover;
+}
+/* Specific modal styling for better visibility */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
